@@ -6,92 +6,10 @@ variable (p : ℕ) [Fact p.Prime]
 
 instance instNeZeroERE : NeZero p := ⟨(Fact.out : p.Prime).ne_zero⟩
 
-/-! ## 1. Collatz dynamics and atomic inverse steps -/
-
-def collatz (n : ℕ) : ℕ := if n % 2 = 0 then n / 2 else 3 * n + 1
-
-def Reaches (v n : ℕ) : Prop := ∃ k, collatz^[k] n = v
-
-theorem collatz_double (a : ℕ) : collatz (2 * a) = a := by
-  unfold collatz
-  split_ifs with h <;> omega
-
-theorem collatz_pow_mul (j m : ℕ) : collatz^[j] (2 ^ j * m) = m := by
-  induction j with
-  | zero => simp
-  | succ j ih =>
-    rw [show 2 ^ (j + 1) * m = 2 * (2 ^ j * m) by ring,
-      Function.iterate_succ_apply, collatz_double, ih]
-
-theorem reaches_trans {a b c : ℕ} (h1 : Reaches b a) (h2 : Reaches c b) : Reaches c a := by
-  obtain ⟨k1, hk1⟩ := h1
-  obtain ⟨k2, hk2⟩ := h2
-  exact ⟨k2 + k1, by rw [Function.iterate_add_apply, hk1, hk2]⟩
-
-/-- The two atomic backward moves: every predecessor of `n` is `2n` (undo halving)
-or an odd `m` with `3m + 1 = n` (undo `3m + 1`). -/
-theorem collatz_eq_iff (m n : ℕ) :
-    collatz m = n ↔ m = 2 * n ∨ (m % 2 = 1 ∧ 3 * m + 1 = n) := by
-  unfold collatz
-  split_ifs with h <;> omega
-
-/-- Multiples of `3` admit only the doubling predecessor. -/
-theorem pred_of_three_dvd {m n : ℕ} (hn : n % 3 = 0) (h : collatz m = n) : m = 2 * n := by
-  rcases (collatz_eq_iff m n).1 h with h1 | ⟨h2, h3⟩ <;> omega
-
-/-- Backward `3m + 1` step, in the form used for the left branch: if `2x - 1 = 3m`
-then `m` is odd and steps to `2x`. -/
-theorem collatz_third_pred {x m : ℕ} (hx : 1 ≤ x) (hm : 2 * x - 1 = 3 * m) :
-    collatz m = 2 * x := by
-  unfold collatz
-  split_ifs with h <;> omega
-
-/-! ## 2. Good numbers, the coordinate `x = (3n+1)/2`, and the valid classes -/
-
-/-- Odd numbers prime to `3`: the only odd numbers with a nontrivial backward `3m+1` branch. -/
-def GoodOdd (n : ℕ) : Prop := n % 2 = 1 ∧ n % 3 ≠ 0
-
-/-- The coordinate: for odd `n`, `n → 3n+1 = 2x → x`. -/
-def toX (n : ℕ) : ℕ := (3 * n + 1) / 2
+/-! ## Domain and operators -/
 
 def InG (x : ℕ) : Prop := 8 ≤ x ∧ (x % 9 = 2 ∨ x % 9 = 8)
 def ValidClass (c : ℕ) : Prop := c % 9 = 2 ∨ c % 9 = 8
-
-theorem collatz_odd {n : ℕ} (hn : n % 2 = 1) : collatz n = 2 * toX n := by
-  unfold collatz toX
-  split_ifs with h <;> omega
-
-theorem reaches_toX {n : ℕ} (hn : n % 2 = 1) : Reaches (toX n) n :=
-  ⟨2, by
-    show collatz (collatz n) = toX n
-    rw [collatz_odd hn, collatz_double]⟩
-
-theorem toX_inG {n : ℕ} (h : GoodOdd n) (h5 : 5 ≤ n) : InG (toX n) := by
-  obtain ⟨h2, h3⟩ := h
-  unfold InG toX
-  refine ⟨by omega, ?_⟩
-  omega
-
-theorem exists_goodOdd_of_inG {x : ℕ} (h : InG x) :
-    ∃ n, GoodOdd n ∧ 5 ≤ n ∧ toX n = x := by
-  obtain ⟨h8, h9⟩ := h
-  refine ⟨(2 * x - 1) / 3, ⟨by omega, by omega⟩, by omega, ?_⟩
-  unfold toX
-  omega
-
-/-- The valid classes are exactly the image of the good odd numbers under `toX`. -/
-theorem inG_iff {x : ℕ} : InG x ↔ ∃ n, GoodOdd n ∧ 5 ≤ n ∧ toX n = x :=
-  ⟨exists_goodOdd_of_inG, by
-    rintro ⟨n, hg, h5, rfl⟩
-    exact toX_inG hg h5⟩
-
-/-! ## 3. Branch operators, descendant tree, and derivation of the branches
-
-Note: Lemmas 4.1–4.3 of the paper (`L_spec`, `residue_mod27`, `R_mem`, `L_mem`,
-`L_valid`, `Desc_mem`) are proved in this block, since the trajectory lemmas need them. -/
-
-/-! ### Operators and invariance of the domain -/
-
 def R (x : ℕ) : ℕ := if x % 9 = 2 then 4 * x else 16 * x
 
 def mult (x : ℕ) : ℕ :=
@@ -168,102 +86,7 @@ theorem Desc_mem {v n : ℕ} (hv : InG v) (h : Desc v n) : InG n := by
   | right _ ih => exact R_mem ih
   | left  _ ih => exact L_mem ih
 
-
-/-! ### Branch trajectories and soundness of the tree (Lemmas 3.4, 3.5) -/
-
-theorem R_reaches (x : ℕ) : ∃ j, collatz^[j] (R x) = x := by
-  unfold R
-  split_ifs
-  · exact ⟨2, by rw [show (4 : ℕ) * x = 2 ^ 2 * x by norm_num]; exact collatz_pow_mul 2 x⟩
-  · exact ⟨4, by rw [show (16 : ℕ) * x = 2 ^ 4 * x by norm_num]; exact collatz_pow_mul 4 x⟩
-
-theorem L_reaches {x : ℕ} (hx1 : 1 ≤ x) (hx3 : x % 3 = 2) :
-    ∃ j, collatz^[j] (L x) = x := by
-  have hs := L_spec hx3
-  obtain ⟨i, hmi⟩ : ∃ i, mult x = 2 * 2 ^ i := by
-    rcases mult_mem x with h | h | h | h
-    · exact ⟨0, by simp [h]⟩
-    · exact ⟨1, by simp [h]⟩
-    · exact ⟨2, by simp [h]⟩
-    · exact ⟨3, by simp [h]⟩
-  obtain ⟨m, hm⟩ : ∃ m, 2 * x - 1 = 3 * m := ⟨(2 * x - 1) / 3, by omega⟩
-  have hL : L x = 2 ^ i * m := by
-    have h6 : 6 * L x = 6 * (2 ^ i * m) := by
-      rw [hs, hmi, hm]; ring
-    exact Nat.eq_of_mul_eq_mul_left (by norm_num) h6
-  have e1 : collatz m = 2 * x := by
-    unfold collatz
-    split_ifs with h <;> omega
-  refine ⟨2 + i, ?_⟩
-  rw [Function.iterate_add_apply, hL, collatz_pow_mul]
-  show collatz (collatz m) = x
-  rw [e1, collatz_double]
-
-theorem Desc_reaches {v n : ℕ} (hv : InG v) (h : Desc v n) : Reaches v n := by
-  induction h with
-  | refl => exact ⟨0, rfl⟩
-  | @right n hn ih =>
-    obtain ⟨j, hj⟩ := R_reaches n
-    obtain ⟨k, hk⟩ := ih
-    exact ⟨k + j, by rw [Function.iterate_add_apply, hj, hk]⟩
-  | @left n hn ih =>
-    have hI : InG n := Desc_mem hv hn
-    have h8 : 8 ≤ n := hI.1
-    have h9 : n % 9 = 2 ∨ n % 9 = 8 := hI.2
-    have hn3 : n % 3 = 2 := by omega
-    have hn1 : 1 ≤ n := by omega
-    obtain ⟨j, hj⟩ := L_reaches hn1 hn3
-    obtain ⟨k, hk⟩ := ih
-    exact ⟨k + j, by rw [Function.iterate_add_apply, hj, hk]⟩
-
-/-! ### Derivation of the branches from the atomic inverse steps (Proposition 3.3) -/
-
-/-- Right branch: no intermediate doubling `2x, 4x, 8x` lands in a valid class
-before `R x` does. -/
-theorem R_first {x : ℕ} :
-    (x % 9 = 2 → ¬ ValidClass (2 * x)) ∧
-    (x % 9 = 8 → ¬ ValidClass (2 * x) ∧ ¬ ValidClass (4 * x) ∧ ¬ ValidClass (8 * x)) := by
-  unfold ValidClass
-  omega
-
-/-- Left branch: with `m = (2x-1)/3` the odd predecessor, `L x` is the first of
-`m, 2m, 4m, 8m` lying in a valid class. -/
-theorem L_first {x m : ℕ} (hx : x % 9 = 2 ∨ x % 9 = 8) (hm : 2 * x - 1 = 3 * m) :
-    L x = m ∨ (¬ ValidClass m ∧ (L x = 2 * m ∨ (¬ ValidClass (2 * m) ∧
-      (L x = 4 * m ∨ (¬ ValidClass (4 * m) ∧ L x = 8 * m))))) := by
-  have hx3 : x % 3 = 2 := by omega
-  have hs := L_spec hx3
-  have h27 := residue_mod27 hx
-  unfold ValidClass
-  unfold mult at hs
-  split_ifs at hs <;> omega
-
-/-- Original-coordinate right rule. -/
-def Rorig (n : ℕ) : ℕ := if n % 3 = 1 then 4 * n + 1 else 16 * n + 5
-
-/-- Original-coordinate left multiplier, selected by `n` modulo `9`. -/
-def multOrig (n : ℕ) : ℕ :=
-  if n % 9 = 1 then 4
-  else if n % 9 = 2 then 2
-  else if n % 9 = 4 then 4
-  else if n % 9 = 5 then 8
-  else if n % 9 = 7 then 16
-  else 2
-
-/-- Original-coordinate left rule. -/
-def Lorig (n : ℕ) : ℕ := (multOrig n * n - 1) / 3
-
-theorem R_conj {n : ℕ} (h2 : n % 2 = 1) :
-    R (toX n) = toX (Rorig n) := by
-  unfold R toX Rorig
-  split_ifs <;> omega
-
-theorem L_conj {n : ℕ} (h2 : n % 2 = 1) (h3 : n % 3 ≠ 0) :
-    L (toX n) = toX (Lorig n) := by
-  unfold L mult toX Lorig multOrig
-  split_ifs <;> omega
-
-/-! ## 4. Precision loss under the left branch (Lemma 4.4) -/
+/-! ## Precision loss under the left branch -/
 
 theorem mod27_eq_of_mod_pow {K x y : ℕ} (hK : 1 ≤ K)
     (hxy : x % 3 ^ (K + 2) = y % 3 ^ (K + 2)) :
@@ -302,7 +125,7 @@ theorem L_cong {K x y : ℕ} (hK : 1 ≤ K)
     linear_combination hLy - hLx + 2 * ((mult x : ℕ) : ℤ) * hq
   exact key
 
-/-! ## 5. Right-branch dynamics on cylinders -/
+/-! ## The right-branch cycle on residue classes -/
 
 def rnext (K c : ℕ) : ℕ := R c % 3 ^ (K + 1)
 def lnext (K e : ℕ) : ℕ := L e % 3 ^ (K + 1)
@@ -466,7 +289,7 @@ theorem four_pow_mod9 (E : ℕ) :
       · have := b (by omega); omega
       · have := c (by omega); omega
 
-/-! ### Exponents and order (Section 5, continued) -/
+/-! ## Exponents and order -/
 
 theorem rIter_modEq {K n c d : ℕ} (hK : 1 ≤ K) (hc : ValidClass c)
     (hcl : c < 3 ^ (K + 1)) (hd : d < 3 ^ (K + 1)) (h : rIter K n c = d) :
@@ -528,7 +351,7 @@ theorem exp_type {K : ℕ} (hK : 1 ≤ K) {c E : ℕ} (hc : ValidClass c)
   obtain ⟨a, b, d⟩ := four_pow_mod9 E
   omega
 
-/-! ### Existence of exponents via pigeonhole (Section 5, continued) -/
+/-! ## Existence of exponents via pigeonhole -/
 
 theorem exists_exp {K : ℕ} (hK : 1 ≤ K) {c : ℕ}
     (hc : ValidClass c) (hlt : c < 3 ^ (K + 1)) :
@@ -635,7 +458,7 @@ theorem R_full_loop {K : ℕ} (hK : 1 ≤ K) :
   rw [h3]
   exact Nat.mod_eq_of_lt h8
 
-/-! ## 6. Affine labels and holonomy -/
+/-! ## Affine labels and walks -/
 
 abbrev Aff := ZMod p × ZMod p
 
@@ -835,7 +658,7 @@ theorem walk_of_rIter {K : ℕ} (hK : 1 ≤ K) (n : ℕ) :
     rw [rightLabel_fst, rightLabel_snd]
     ext <;> simp [pow_add, mul_comm]
 
-/-! ## 7. Fibres and stabilization -/
+/-! ## Fibres -/
 
 def M (K v : ℕ) : Set (ℕ × ZMod p) :=
   {q | ∃ n, Desc v n ∧ q = (n % 3 ^ (K + 1), (n : ZMod p))}
@@ -940,7 +763,7 @@ theorem fibre_root_nonempty (K v : ℕ) :
     (fibre p K v (v % 3 ^ (K + 1))).Nonempty :=
   ⟨(v : ZMod p), v, Desc.refl, rfl⟩
 
-/-! ### Stabilisation of fibre cardinalities (Section 7, continued) -/
+/-! ## Stabilisation of fibre cardinalities -/
 
 theorem fibre_ncard_step (hp5 : 5 ≤ p) {v : ℕ} (hv : InG v) {K : ℕ}
     (hK : 1 ≤ K) (c : ℕ) :
@@ -989,8 +812,6 @@ theorem fibre_ncard_antitone {v : ℕ} (K : ℕ) (hK : 1 ≤ K) :
     rwa [Nat.mod_eq_of_lt h8] at this
   exact Set.ncard_le_ncard hsub
 
-/-- Cardinality Stabilization (Proposition 7.3): At sufficiently large depth `K ≥ K0`,
-all fibre cardinalities `|F_K(c)|` stabilize to a common constant `σ ≥ 1`. -/
 theorem stabilization (hp5 : 5 ≤ p) {v : ℕ} (hv : InG v) :
     ∃ K0 σ : ℕ, 1 ≤ K0 ∧ 1 ≤ σ ∧
       ∀ K, K0 ≤ K → ∀ c, ValidClass c → c < 3 ^ (K + 1) →
@@ -1100,14 +921,14 @@ theorem walk_image (hp5 : 5 ≤ p) {v K0 σ : ℕ} (hv : InG v)
       funext (athen_app p (ainv p f) g)
     rw [hfun, Set.image_comp, e2, ih]
 
-/-! ## 8. The commutator engine and simultaneous density -/
+/-! ## Commutator identity -/
 
 theorem comm_label (lam α β : ZMod p) (hl : lam ≠ 0) (ha : α ≠ 0) :
     athen p (athen p (athen p (ainv p (α, β)) (ainv p (lam, 0))) (α, β)) (lam, 0)
       = (1, (lam - 1) * β) := by
   ext
-  · simp [athen, ainv]; field_simp
-  · simp [athen, ainv]; field_simp; ring
+  · simp [athen, ainv]; try field_simp
+  · simp [athen, ainv]; try field_simp; try ring
 
 theorem translation_of_dilation (hp5 : 5 ≤ p) {K : ℕ}
     {lam α β : ZMod p}
@@ -1120,7 +941,7 @@ theorem translation_of_dilation (hp5 : 5 ≤ p) {K : ℕ}
   rw [comm_label p lam α β hl0 ha] at h
   exact ⟨(lam - 1) * β, mul_ne_zero (sub_ne_zero.2 hl1) hb, h⟩
 
-/-! ### Existence of a nontrivial translation (Section 8, continued) -/
+/-! ## Existence of a nontrivial translation -/
 
 theorem ref_walk (hp5 : 5 ≤ p) {K : ℕ} (hK : 1 ≤ K) :
     ∃ α β : ZMod p, α ≠ 0 ∧ β ≠ 0 ∧ (α, β) ∈ Hol p K := by
@@ -1211,7 +1032,7 @@ theorem pure_dilation_of_pair (hp5 : 5 ≤ p) {K : ℕ} (hK : 1 ≤ K) {e1 e2 : 
   convert hfull using 1
   apply Prod.ext
   · simp only [athen, ainv, leftLabel]; field_simp
-  · simp only [athen, ainv, leftLabel]; field_simp; ring
+  · simp only [athen, ainv, leftLabel]; field_simp; try ring
 
 theorem dil_case2a (hp5 : 5 ≤ p) {K a : ℕ}
     (hK : 1 ≤ K) (ha2 : 2 ≤ a) (haK : a ≤ K)
@@ -1383,10 +1204,8 @@ theorem translation_exists (hp5 : 5 ≤ p) {K : ℕ} (hK : 1 ≤ K) :
   obtain ⟨α, β, ha, hb, hh⟩ := ref_walk p hp5 hK
   exact translation_of_dilation p hp5 hl0 hl1 ha hb hμ hh
 
-/-! ### Simultaneous density (Theorem 8.6) -/
+/-! ## Simultaneous density -/
 
-/-- Simultaneous Density (Theorem 8.6): For any valid cylinder `c < 3^(J+1)` and any
-residue `r ∈ ZMod p`, descendants of `v` realize `r` within cylinder `c`. -/
 theorem main_theorem_core (hp5 : 5 ≤ p) {v : ℕ} (hv : InG v)
     {J : ℕ} (hJ : 1 ≤ J) {c : ℕ}
     (hc : ValidClass c) (hcl : c < 3 ^ (J + 1)) (r : ZMod p) :
@@ -1448,11 +1267,70 @@ theorem main_theorem_core (hp5 : 5 ≤ p) {v : ℕ} (hv : InG v)
   obtain ⟨n, hn, hpair⟩ := hr'
   exact ⟨n, hn, (Prod.mk.inj hpair).1.symm, (Prod.mk.inj hpair).2.symm⟩
 
-/-! ## Seeds (Lemma 3.6) and the Collatz bridge (auxiliary) -/
+/-! ## Collatz layer: descendants reach their seed -/
+
+def collatz (n : ℕ) : ℕ := if n % 2 = 0 then n / 2 else 3 * n + 1
+
+def Reaches (v n : ℕ) : Prop := ∃ k, collatz^[k] n = v
+
+theorem collatz_double (a : ℕ) : collatz (2 * a) = a := by
+  unfold collatz
+  split_ifs with h <;> omega
+
+theorem collatz_pow_mul (j m : ℕ) : collatz^[j] (2 ^ j * m) = m := by
+  induction j with
+  | zero => simp
+  | succ j ih =>
+    rw [show 2 ^ (j + 1) * m = 2 * (2 ^ j * m) by ring,
+      Function.iterate_succ_apply, collatz_double, ih]
+
+theorem R_reaches (x : ℕ) : ∃ j, collatz^[j] (R x) = x := by
+  unfold R
+  split_ifs
+  · exact ⟨2, by rw [show (4 : ℕ) * x = 2 ^ 2 * x by norm_num]; exact collatz_pow_mul 2 x⟩
+  · exact ⟨4, by rw [show (16 : ℕ) * x = 2 ^ 4 * x by norm_num]; exact collatz_pow_mul 4 x⟩
+
+theorem L_reaches {x : ℕ} (hx1 : 1 ≤ x) (hx3 : x % 3 = 2) :
+    ∃ j, collatz^[j] (L x) = x := by
+  have hs := L_spec hx3
+  obtain ⟨i, hmi⟩ : ∃ i, mult x = 2 * 2 ^ i := by
+    rcases mult_mem x with h | h | h | h
+    · exact ⟨0, by simp [h]⟩
+    · exact ⟨1, by simp [h]⟩
+    · exact ⟨2, by simp [h]⟩
+    · exact ⟨3, by simp [h]⟩
+  obtain ⟨m, hm⟩ : ∃ m, 2 * x - 1 = 3 * m := ⟨(2 * x - 1) / 3, by omega⟩
+  have hL : L x = 2 ^ i * m := by
+    have h6 : 6 * L x = 6 * (2 ^ i * m) := by
+      rw [hs, hmi, hm]; ring
+    exact Nat.eq_of_mul_eq_mul_left (by norm_num) h6
+  have e1 : collatz m = 2 * x := by
+    unfold collatz
+    split_ifs with h <;> omega
+  refine ⟨2 + i, ?_⟩
+  rw [Function.iterate_add_apply, hL, collatz_pow_mul]
+  show collatz (collatz m) = x
+  rw [e1, collatz_double]
+
+theorem Desc_reaches {v n : ℕ} (hv : InG v) (h : Desc v n) : Reaches v n := by
+  induction h with
+  | refl => exact ⟨0, rfl⟩
+  | @right n hn ih =>
+    obtain ⟨j, hj⟩ := R_reaches n
+    obtain ⟨k, hk⟩ := ih
+    exact ⟨k + j, by rw [Function.iterate_add_apply, hj, hk]⟩
+  | @left n hn ih =>
+    have hI : InG n := Desc_mem hv hn
+    have h8 : 8 ≤ n := hI.1
+    have h9 : n % 9 = 2 ∨ n % 9 = 8 := hI.2
+    have hn3 : n % 3 = 2 := by omega
+    have hn1 : 1 ≤ n := by omega
+    obtain ⟨j, hj⟩ := L_reaches hn1 hn3
+    obtain ⟨k, hk⟩ := ih
+    exact ⟨k + j, by rw [Function.iterate_add_apply, hj, hk]⟩
 
 theorem collatz_8 : collatz^[3] 8 = 1 := by decide
 
-/-- Auxiliary milestone (Table 2): Density of reaching predecessors for base target `w = 1`. -/
 theorem inverse_tree_covers (r : ZMod p) :
     ∃ n : ℕ, 0 < n ∧ Reaches 1 n ∧ (n : ZMod p) = r := by
   have hp : p.Prime := Fact.out
@@ -1483,6 +1361,11 @@ theorem inverse_tree_covers (r : ZMod p) :
       · exact ⟨0, rfl⟩
       · exact ⟨1, by decide⟩
 
+theorem reaches_trans {a b c : ℕ} (h1 : Reaches b a) (h2 : Reaches c b) : Reaches c a := by
+  obtain ⟨k1, hk1⟩ := h1
+  obtain ⟨k2, hk2⟩ := h2
+  exact ⟨k2 + k1, by rw [Function.iterate_add_apply, hk1, hk2]⟩
+
 theorem exists_inG_reaches (m : ℕ) (hm : 0 < m) (hm3 : m % 3 ≠ 0) :
     ∃ v, InG v ∧ Reaches m v := by
   have hm9 : m % 9 = 1 ∨ m % 9 = 2 ∨ m % 9 = 4 ∨ m % 9 = 5 ∨ m % 9 = 7 ∨ m % 9 = 8 := by omega
@@ -1494,7 +1377,7 @@ theorem exists_inG_reaches (m : ℕ) (hm : 0 < m) (hm3 : m % 3 ≠ 0) :
   · refine ⟨512 * m, ⟨by omega, Or.inl (by omega)⟩, ⟨9, collatz_pow_mul 9 m⟩⟩
   · refine ⟨64 * m, ⟨by omega, Or.inr (by omega)⟩, ⟨6, collatz_pow_mul 6 m⟩⟩
 
-/-! ## Auxiliary lemmas for Section 9 (Table 2: Collatz bridge, small primes) -/
+/-! ## General targets and modular bridges -/
 
 lemma exists_pow_two_mod (w a : ℕ) (hw3 : w % 3 ≠ 0) (ha9 : a = 1 ∨ a = 2) :
     ∃ j < 6, 2 ^ j * w % 9 = a := by
@@ -1592,7 +1475,7 @@ lemma reaches_of_three_mul_add_one {w k q : ℕ} (hk : 1 ≤ k)
   rw [Function.iterate_succ_apply, hc]
   exact collatz_pow_mul _ _
 
-/-! ## 9. Small primes and the master theorem -/
+/-! ## The three cases and the master theorem -/
 
 theorem main_theorem_p_ge_5 (hp5 : 5 ≤ p)
     (w : ℕ) (hw : 0 < w) (hw3 : w % 3 ≠ 0)
@@ -1658,9 +1541,6 @@ theorem main_theorem_p_eq_3 (w : ℕ) (hw : 0 < w) (hw3 : w % 3 ≠ 0)
     rw [show 2 ^ (k + 1) * w = 2 * (2 ^ k * w) by ring]
     omega
 
-/-- Master Theorem (Theorem 1.1): For every prime `p`, every target `w > 0` with `3 ∤ w`,
-every residue `r ∈ ZMod p`, and every threshold `B`, there exists `n > B` reaching `w`
-with `n ≡ r (mod p)`. -/
 theorem main_theorem_infinite (w : ℕ) (hw : 0 < w) (hw3 : w % 3 ≠ 0)
     (r : ZMod p) (B : ℕ) :
     ∃ n : ℕ, B < n ∧ Reaches w n ∧ (n : ZMod p) = r := by
@@ -1676,7 +1556,7 @@ theorem main_theorem_infinite (w : ℕ) (hw : 0 < w) (hw3 : w % 3 ≠ 0)
     · exact main_theorem_p_eq_2 2 w hw hw3 rfl r B
     · exact main_theorem_p_eq_3 3 w hw hw3 rfl r B
 
-/-! ## 10. Application: local obstruction barriers for cycles -/
+/-! ## Modular solvability of cycle equations -/
 
 theorem cycle_equation_solvable_mod_p (S k N : ℕ)
     (h : ((2 ^ S - 3 ^ k : ℤ) : ZMod p) ≠ 0) :
@@ -1684,7 +1564,7 @@ theorem cycle_equation_solvable_mod_p (S k N : ℕ)
   refine ⟨((2 ^ S - 3 ^ k : ℤ) : ZMod p)⁻¹ * (N : ZMod p), ?_⟩
   rw [← mul_assoc, mul_inv_cancel₀ h, one_mul]
 
-/-! ### Absence of local obstructions (Theorem 10.3) -/
+/-! ## The modular barrier on cycles -/
 
 structure CycleSpec where
   k : ℕ
@@ -1697,8 +1577,6 @@ theorem reaching_predecessor_dense_mod_p {v : ℕ} (hv : 0 < v) (hv3 : v % 3 ≠
   obtain ⟨n, _, h1, h2⟩ := main_theorem_infinite p v hv hv3 r 0
   exact ⟨n, h1, h2⟩
 
-/-- Absence of Local Modular Obstructions (Theorem 10.3): Single-prime modular conditions
-cannot obstruct hypothetical Collatz cycle equations when the denominator is non-zero mod `p`. -/
 theorem cycle_local_obstruction_barrier (spec : CycleSpec)
     (h_denom : ((2 ^ spec.S - 3 ^ spec.k : ℤ) : ZMod p) ≠ 0)
     {v : ℕ} (hv : 0 < v) (hv3 : v % 3 ≠ 0) :
