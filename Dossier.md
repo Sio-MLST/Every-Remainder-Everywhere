@@ -2,7 +2,7 @@
 
 Status tags: **\[proved\]** = short proof given or standard. **\[derived\]** = derived here and checked numerically, proof needs one more pass. **\[numeric\]** = observed in computation only. **\[idea\]** = tentative. **\[open\]** = unresolved.
 
-Note: these statuses were assigned by an LLM and are **\[dubious\]** by default unless externally verified. **\[proved\]** means a short argument is written out next to the claim, not that it has been independently checked.
+Note: these statuses were assigned by an LLM and are **\[dubious\]** by default unless externally verified. **\[proved\]** in this document means a short argument is written out next to the claim, not that it has been independently checked.
 
 Scope: three threads. (1) The left branch alone. (2) BBP, treated as a second instance of the specific-number problem (π is the motivating example only). (3) Digit-level versus word-level disjunctiveness, and what is still missing for normality. Every Remainder Everywhere (ERE) is used as a black box.
 
