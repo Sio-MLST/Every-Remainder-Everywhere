@@ -1,10 +1,10 @@
 # Dossier: left-branch disjunctiveness, BBP, and digit-to-word bridges
 
-Status tags: **\[proved\]** = short proof given or standard. **\[derived\]** = derived here and checked numerically, proof needs one more pass. **\[numeric\]** = observed in computation only. **\[idea\]** = tentative. **\[open\]** = unresolved.
+Status tags: **\[proved\]** = short proof given or standard. **\[derived\]** = derived here and checked numerically, proof needs one more pass. **\[numeric\]** = observed in computation only. **\[idea\]** = tentative. **\[open\]** = unresolved. **\[checked in Lean\]** (sections 2.10 and 2.11 only) = the statement is a theorem in AtomicERE\_pure.lean, which compiles with Lean 4.36.0-rc1, standard axioms only.
 
 Note: these statuses were assigned by an LLM and are **\[dubious\]** by default unless externally verified. **\[proved\]** means a short argument is written out next to the claim, not that it has been independently checked.
 
-Scope: three threads. (1) The left branch alone. (2) BBP, treated as a second instance of the specific-number problem (π is the motivating example only). (3) Digit-level versus word-level disjunctiveness, and what is still missing for normality. Every Remainder Everywhere (ERE) is used as a black box.
+Scope: four threads. (1) The left branch alone. (2) BBP, treated as a second instance of the specific-number problem (π is the motivating example only). (3) Digit-level versus word-level disjunctiveness, and what is still missing for normality. (4) The composite-modulus problem for ERE itself (2.10 and 2.11), which came out of porting the atomic proof to pure Lean. Threads 1 to 3 use ERE as a black box; thread 4 is about it.
 
 **Revision notes.** Derivations sit next to each result, in blocks headed *Derivation*. Corrections: 1.2 and 1.4 (disjunctive in base b does imply full support in every b^k, so digit-level and word-level disjunctiveness over base powers are equivalent); Theorem B's seeds now lie in the valid classes; summary item 4 now names the commutator the argument actually uses. New: 1.8 (hot-spot criterion), 2.8 (quantifiers), 2.9 (dyadic versus triadic), an appendix with the scripts, and a citation pass (abstracts and secondary sources read, not the full papers). Section 3 is reframed: π is a motivating example of the specific-number problem, not a target.
 
@@ -19,6 +19,12 @@ Scope: three threads. (1) The left branch alone. (2) BBP, treated as a second in
 5. **Two theorems follow \[derived\].** (A) For 3-adically generic seeds, sparse sampling gives almost-sure disjunctiveness (constant gap) or normality (growing gaps). (B) A Champernowne-style concatenation over the left orbits of *all* seeds is provably normal in every base b coprime to 6.
 6. **Single seed 8 \[open\].** It reduces to a ×2 / ×3 digit-interaction problem (Furstenberg flavor). ERE does not reach it, because ERE quantifies over all branch choices.
 7. **BBP and π: a second specific-number problem \[open\].** Normality of π and normality of a single left-only orbit are the same kind of problem: showing that one specific deterministic sequence is generic. Almost-every results and averaged constructions do not decide a particular number. Corrected fact: the Bailey–Crandall perturbation r\_n is O(n⁻²), not O(1/n). Section 3 records what BBP does and does not give.
+
+**Added in the later revisions (see 2.10 and 2.11).**
+
+8. **ERE modulo composite M \[checked in Lean, conditional\].** The obstruction, stabilisation and holonomy machinery of the atomic proof need only that 2 and 3 are invertible modulo M, so they hold for every M coprime to 6. Only the step producing a translation needs a field, and its abstract form is false over Z/55 and Z/25. The full theorem for composite M follows from one hypothesis, `UnitTranslation M`, which is open.
+9. **Slope-1 loops \[derived, checked on 14 certificates\].** A unit translation exists at depth K iff some closed walk has M | 2^A − 3^u and gcd(C, M) = 1, the shape of the Collatz cycle equation. No failure up to M = 400 (depth 1) and M = 200 (depth 2).
+10. **Effectivity is not a K₀ problem \[checked in Lean\].** Fibres are full at every depth and stabilisation holds from depth 1, but only as a corollary of the theorem, so a bound on the witness n remains open.
 
 ## 1. Digits versus words
 
@@ -395,6 +401,8 @@ A metric argument over a continuous family (e.g. x(s) = Σ 16^{−k}/(8k+s)) pro
 5. Test the 8-orbit against the generic law for 10⁷–10⁹ steps; look for deviations by class.
 6. For BBP: run P5, then attack P1–P3 on the toy model. This tests the independence heuristic; it proves nothing about a specific number.
 
+7) For ERE modulo composite M: follow the four steps in 2.11 H (formalize the loop formula, prove existence of slope-1 loops with a unit translation, search for counterexamples, try the Goursat route).
+
 ## 5. Pitfalls to remember
 
 - Disjunctive never implies normal by itself. The bridge is irreducible + aperiodic + generic driver.
@@ -404,6 +412,154 @@ A metric argument over a continuous family (e.g. x(s) = Σ 16^{−k}/(8k+s)) pro
 - r\_n in BBP is O(n⁻²). The recursion for z\_n is a tautology unless you add arithmetic input.
 
 Almost-every results and averaged constructions never decide a specific number. π (via BBP) and the 8-orbit share that obstruction.
+
+# Dossier: Every Remainder Everywhere in atomic coordinates, the left branch, and digit normality
+
+Status tags: **\[proved\]** = short proof given or standard. **\[derived\]** = derived here and checked numerically; the proof needs one more pass. **\[numeric\]** = observed in computation only. **\[idea\]** = tentative. **\[open\]** = unresolved. **\[checked in Lean\]** = the statement is a theorem in AtomicERE\_pure.lean (Lean 4.36.0-rc1, standard axioms only).
+
+These statuses were assigned by an LLM and are **\[dubious\]** by default unless externally verified. **\[proved\]** means a short argument is written out next to the claim, not that it has been independently checked.
+
+Scope: four threads. (1) The atomic form of Every Remainder Everywhere (ERE) and its formalization in pure Lean, including an open problem for composite moduli (sections 1 to 3). (2) The left branch alone, the greedy-undo orbit (section 4). (3) Digit-level versus word-level disjunctiveness and what is missing for normality (section 5). (4) BBP as a second instance of the specific-number problem (section 6). The steps D and U (atomic coordinates) are the primary language throughout. The projected-coordinate form of ERE appears only in the dictionary of section 9.
+
+## 0. Summary
+
+1. **Atomic ERE in pure Lean \[checked in Lean\].** The atomic proof of ERE is formalized in about 2,350 lines of Lean 4 with no Mathlib (AtomicERE\_pure.lean). The statement a reader has to trust is short: `collatz`, `iter`, `Reaches`, `IsPrime` and the type of `main_theorem`.
+2. **Primality enters late \[checked in Lean\].** The obstruction (“no flat assignment”), the stabilisation of fibre sizes, and the walk and holonomy machinery need only that 2 and 3 are invertible modulo M. They hold for every M ≥ 5 coprime to 6. Only the step that produces a translation needs a field.
+3. **Open problem \[open\].** ERE modulo a composite M follows from one hypothesis, `UnitTranslation M`: the holonomy group of the depth-K state graph contains a unit translation for every K ≥ 1 (`main_theorem_mod`, checked in Lean). It is proved for primes and open for composite M; certificates exist for 15 pairs (M, K), and a search found no counterexample.
+4. **Slope-1 loops \[derived\].** A unit translation at depth K exists iff some closed walk has M | 2^A − 3^u and gcd(C, M) = 1, which has the shape of the Collatz cycle equation.
+5. **Effectivity \[checked in Lean\].** Fibres are full at every depth and stabilisation holds from depth 1, but only as a corollary of the theorem. The open effectivity question is a bound on the witness n, not on the stabilisation depth.
+6. **Left branch \[derived\].** The greedy-undo orbit modulo M (M coprime to 6) is a Markov-modulated random affine walk, not an i.i.d. one, with explicit translations −9/32 and −3/8 in its loop group. Two theorems follow: almost-sure disjunctiveness or normality of sparse residues for generic 3-adic seeds (Theorem A), and a Champernowne-style normal number over all seeds (Theorem B).
+7. **Single orbits \[open\].** A single left-branch orbit (for instance the orbit of 8) reduces to a ×2 / ×3 digit-interaction problem. Almost-every and averaged results never decide a specific number.
+8. **Digits and words \[proved\].** A number is disjunctive in base b iff it has full support in every base b^k; simple normality in base b^k for infinitely many k already gives normality in base b; normality is equivalent to the absence of a hot spot.
+9. **BBP \[open\].** The Bailey–Crandall perturbation r\_n is O(n⁻²). The BBP recursion is a tautology without extra arithmetic input; normality of π via BBP is not expected from the methods here.
+
+## 1. The atomic setting
+
+### 1.1 Steps, tree and theorem
+
+Let C(n) = n/2 for even n and C(n) = 3n + 1 for odd n; write n ⇝ v if C^k(n) = v for some k ≥ 0. The two backward steps are D: n ↦ 2n (always allowed) and U: n ↦ (n−1)/3, allowed when n ≡ 4 (mod 6) and the result is live (3 ∤ it), i.e. n ≢ 1 (mod 9). Numbers divisible by 3 have only the predecessor 2n, which is why the target w must satisfy 3 ∤ w. The atomic tree T(v) of an even live seed v is the smallest set containing v and closed under D and U; every n ∈ T(v) satisfies n ⇝ v. For a target w with 3 ∤ w the seed is v = 2w.
+
+**Theorem (ERE, atomic form) \[checked in Lean\].** For every prime p, every w > 0 with 3 ∤ w, every residue r and every bound B, there is n > B with n ⇝ w and n ≡ r (mod p). This is an existence statement about predecessors. It does not bound n, and it says nothing about how many numbers reach w.
+
+### 1.2 State graph, labels, holonomy
+
+At depth K ≥ 1 the states are pairs (c, f): c a unit modulo 3^(K+1) (3 ∤ c) and f ∈ {0, 1} the parity of the node. A node n has state (n mod 3^(K+1), n mod 2). Edges:
+
+- D: (c, f) → (2c mod 3^(K+1), 0), label t ↦ 2t.
+- U: (e mod 3^(K+1), 0) → (((e−1)/3) mod 3^(K+1), 1) for e < 3^(K+2), e ≡ 1 (mod 3), e ≢ 1 (mod 9), label t ↦ (t−1)/3.
+
+Labels are affine maps of Z/M, M a modulus coprime to 6, and record how the residue of a node modulo M changes along the edge. A walk uses edges forwards or backwards (a backward edge contributes the inverse label). The holonomy group Hol\_K(M) ⊂ Aff(Z/M) is the set of labels of closed walks at the base state (1, 0). The fibre F\_K(c, f) is the set of residues modulo M of tree nodes n with n ≡ c (mod 3^(K+1)) and n ≡ f (mod 2).
+
+### 1.3 The proof in outline
+
+1. **Stabilisation.** σ\_K = |F\_K(1, 0)| is at most M, at least 1 and non-increasing in K, so it is eventually constant. Doubling is injective on fibres, and multiplication by 2 cycles through all units modulo 3^(K+1) (order 2·3^K, by lifting-the-exponent for the base 4 at the prime 3), so all even fibres at a given depth have the same size. Once sizes are stable, inclusions between fibres are equalities, and every edge maps the fibre of its source onto the fibre of its target. Hence every closed walk acts by its label as a bijection of F\_K(1, 0).
+2. **No flat assignment.** A flat assignment is a function Φ from states to Z/p with Φ(w) = f(Φ(u)) for every edge u → w with label f. None exists. Derivation:
+   - The two D-edges from (c, 0) and (c, 1) share target and label, so 2Φ(c, 0) = 2Φ(c, 1), hence Φ(c, 0) = Φ(c, 1); and Φ(2c, 0) = 2Φ(c, 0).
+   - The U-relation reads 3Φ(target) = Φ(source) − 1. At e = 4 it gives 3Φ(1, 1) = Φ(4, 0) − 1; with Φ(4, 0) = 4Φ(1, 0) and Φ(1, 1) = Φ(1, 0) this forces Φ(1, 0) = 1.
+   - Induction gives Φ(2^j mod 3^(K+1), 0) = 2^j. Every unit ≡ 1 (mod 3) is a power of 4 modulo 3^(K+1), and Φ = 4^e there.
+   - Take y with 2y + 1 = 3^(K+1). The U-edges from y + 3^(K+1) and y + 2·3^(K+1) give 3Φ(y) = Φ(y) − 1 and Φ(y + 3^K) = Φ(y). Writing y ≡ 2^j and using 4^(3^(K−1)) ≡ 1 + 3^K (mod 3^(K+1)) gives 4^(3^(K−1)) = 1 in Z/p.
+   - So the order of 4 in Z/p is 3^a with a ≤ K−1, and a ≥ 1 (a = 0 would give 3 = 0). The node 4 + 3^(a+1) has Φ = 4, and its U-edge forces Φ(1 + 3^a) = 1. But 1 + 3^a ≡ 4^d (mod 3^(K+1)) for some d, and 4^d = 1 in Z/p forces 3^a | d, hence 4^d ≡ 1 (mod 3^(a+1)), contradicting 1 + 3^a ≢ 1 (mod 3^(a+1)).
+3. **From a fixed point to a flat assignment.** A common fixed point x of Hol\_K yields a flat assignment: Φ(u) = g(x) for any walk g from the base state to u (well defined because two such walks differ by a closed walk). So no flat assignment means no common fixed point.
+4. **A translation.** Over a field, a subgroup of Aff with no common fixed point contains a nonzero translation. If every slope is 1, the elements are translations, and a nonzero one exists because there is no fixed point. Otherwise take h₀ = (ℓ₀, m₀) with ℓ₀ ≠ 1 and fixed point x₀ = m₀/(1−ℓ₀). For any k = (ℓ\_k, m\_k), the commutator k ; h₀ ; k⁻¹ ; h₀⁻¹ is the translation by (ℓ₀−1)(ℓ\_k x₀ + m\_k − x₀)/(ℓ\_k ℓ₀). If every such translation is trivial then k(x₀) = x₀ for all k, a common fixed point.
+5. **Density.** A translation (1, d) with d ≠ 0 maps F\_K(1, 0) onto itself, so t ∈ F implies t + d ∈ F. The fibre is nonempty (the seed), so it contains t₀ + kd for all k, which is all of Z/p. All even fibres have equal size, so all are full; projecting from depth max(K₀, J) to depth J, and using n ⇝ v, gives the theorem.
+
+## 2. The Lean formalization
+
+The file is AtomicERE\_pure.lean. It has about 2,350 lines, no imports (Lean core only: `omega`, `grind`, the core `List`, `Nat` and `Fin` libraries), compiles in about 12 seconds with Lean 4.36.0-rc1 (`lean AtomicERE_pure.lean`), and prints only `#print axioms` lines: `propext`, `Classical.choice`, `Quot.sound`. It contains no `sorry`, `axiom`, `unsafe`, `native_decide` or metaprogramming, and `leanchecker` accepts the compiled module. The statement a reader has to trust is `collatz`, `iter`, `Reaches`, `IsPrime` and the type of `main_theorem`.
+
+### 2.1 Choices that differ from a library-based development
+
+- ZMod p is `Fin p`; the cast of a natural number is `cs p n`. Powers of 2 and 4 modulo p are stated on naturals (`cs p (4 ^ m) = 1`).
+- Sets of residues are predicates `Fin p → Prop`; cardinality is the length of a filtered list, and pigeonhole is `List.Nodup.length_le_of_subset`.
+- `padicValNat` is replaced by an elementary lifting-the-exponent lemma for the base 4 (induction using the cubing identity (1 + 3^j u)^3 = 1 + 3^(j+1) w with 3 ∤ w).
+- `orderOf` is replaced by the predicate Q m := cs p (4^m) = 1, closed under addition, remainders and gcd; every divisor of 3^n is a power of 3.
+- `Nat.find` is replaced by `stabilize_nat` (a non-increasing sequence of naturals is eventually constant).
+- “Every nonzero residue has an inverse” is proved from primality by injectivity of multiplication plus the counting argument (`isPrime_pfield`).
+- In core Lean, `grind` proves ring identities in `Fin p` for symbolic p but sometimes fails at unit-cancellation steps; those are proved by explicit calculations (`cancel_unit`).
+
+### 2.2 Full fibres at every depth \[checked in Lean\]
+
+Let p ≥ 5 be prime, v even, 3 ∤ v. For every depth J ≥ 1, every unit class c < 3^(J+1) and every residue r there is an even tree node n ≡ c (mod 3^(J+1)) with n ≡ r (mod p) (`fibre_full`). The same holds for odd nodes (`fibre_full_odd`), and the stabilisation predicate holds from depth 1 (`stab_one`).
+
+*Derivation.* σ\_K ≤ p always, σ\_K is non-increasing, and σ\_K = p at the depth where the proof stabilises. So σ\_K = p for every K ≥ 1.
+
+*What this does not give.* It is a corollary of the density theorem. The proof of `fibre_full` below the stabilisation depth goes through that depth and projects down, and `stab_one` is derived from the theorem. The non-effective stabilisation depth is therefore not a separate obstruction beyond the real open question, a bound on the witness n. A bound would require stabilisation at depth 1 before the theorem is known, so that walks act on fibres at depth J itself.
+
+### 2.3 Weaker hypotheses \[checked in Lean\]
+
+- For every M ≥ 5 coprime to 6, prime or not: no flat assignment exists (`no_flat_coprime6`), and fibre sizes stabilise (`stabilization_coprime6`).
+- These parts use only the class `Inv23` (2 and 3 invertible), not a field. Walks and holonomy are closed under inverses and products under `Inv23` (`Walk.symm`, `Hol_inv`); edges and walks map fibres onto fibres (`edge_image`, `walk_image`); a common fixed point yields a flat assignment (`flat_of_fixed`).
+- Density needs only a unit translation at every depth (`fibre_full_of_translation`). The only step that needs a field is `translation_of_no_fixed`.
+
+### 2.4 Where the argument stops \[checked in Lean, for the abstract lemma\]
+
+The translation step divides by 1 − ℓ₀ whenever ℓ₀ ≠ 1, which needs a field. Its abstract statement (a subgroup of Aff(R) with no common fixed point contains a nonzero translation) is false for R = Z/55: the subgroup generated by t ↦ 36t + 11 has no common fixed point and no nonzero translation (`z55_no_common_fixed_point`, `z55_no_nonzero_translation`, `z55_generates_group_of_order_five`). Reason: 36 ≡ 1 (mod 5) and 36 ≡ 3 (mod 11), where 3 has order 5, and every nontrivial power has slope ≠ 1. The abstract unit-translation statement also fails over a prime power: over Z/25 the subgroup generated by t ↦ 6t + 1 has no fixed point and its translations are exactly the multiples of 5 (`z25_no_common_fixed_point`, `z25_translations_not_units`). These facts concern abstract subgroups; they say nothing about the actual holonomy group of the state graph.
+
+### 2.5 Dependency inventory \[read off the file\]
+
+- Arithmetic specific to the prime 3: lifting-the-exponent for the base 4 at 3, the order 2·3^K of 2 modulo 3^(K+1) and the cycle of units, the congruence 4^(3^n) ≡ 1 + 3^(n+1) (mod 3^(n+2)), and the explicit nodes 4, y, y + 3^K, 4 + 3^(a+1) of the no-flat argument.
+- Written against the edge definitions and the field property, not against 3: counting, stabilisation, walks, holonomy, the translation lemma, density.
+- Adapting the construction to 5x + 1 or similar maps means replacing the first group. The projected-coordinate material reports that its construction breaks structurally at Wieferich primes q (1093 and 3511 below 5000); this has not been re-derived.
+
+### 2.6 Reading map
+
+Parts of the file in order: Collatz layer and tree; 3-adic arithmetic; units cycle; residues, `PField`, `Inv23`, counting; affine labels; edges, walks, holonomy; fibres; stabilisation and the action of walks; flat assignments; order of 4; no flat assignment; connectivity and fixed points; translation; density and primes; small primes and `main_theorem`; composite moduli (`UnitTranslation`, `main_theorem_mod`, certificates); the executable experiment `holStats`.
+
+## 3. The open problem: unit translations modulo composite M
+
+**Statement.** For M ≥ 5 coprime to 6, prove `UnitTranslation M` or find an M and a depth where it fails: for every K ≥ 1 there is a unit d of Z/M and a closed walk at the base state (1, 0) of the depth-K state graph whose label is t ↦ t + d.
+
+**Why it is the only missing hypothesis \[checked in Lean\].** `main_theorem_mod` proves the full theorem modulo any M ≥ 5 coprime to 6 from `UnitTranslation M` (density step: section 1.3, item 5, with d a unit, so the orbit of t₀ under t ↦ t + d is all of Z/M). For primes `UnitTranslation` is a theorem (`unitTranslation_of_prime`).
+
+### 3.1 Reductions
+
+1. **Translations form an additive subgroup \[checked in Lean\].** (`translation_add`, `translation_neg`, `translation_nsmul`.) T\_K = {d : (1, d) ∈ Hol\_K(M)} is a subgroup of the cyclic group Z/M, so T\_K = dZ/M for some d | M, and `UnitTranslation` at depth K is equivalent to T\_K = Z/M.
+2. **One prime at a time \[derived\].** For M = q₁⋯q\_s squarefree, T\_K = Z/M iff for each i some d\_i ∈ T\_K is not divisible by q\_i. Derivation: put d = Σ\_i (M/q\_i)·d\_i. Modulo q\_j only the term i = j survives, and it equals (M/q\_j)·d\_j, a unit mod q\_j. So d is a unit modulo every q\_j, hence modulo M, and d ∈ T\_K. Prime powers q^e are treated the same way with q.
+3. **Projection is onto \[derived\].** Reducing labels mod q maps Hol\_K(M) onto Hol\_K(q): the same words give the same walks. By the prime case, for each q | M there is a closed walk with label ≡ (1, τ) mod q and τ ≠ 0. Its label modulo the other prime factors is unconstrained.
+
+### 3.2 Why abstract group theory cannot finish it
+
+Section 2.4 gives the counterexamples (Z/55, Z/25). Mechanism over Z/55: the translation modulo 5 is glued to a slope of order 5 modulo 11, so any power that cancels the slope modulo 11 (k a multiple of 5) also cancels the translation modulo 5. A proof of `UnitTranslation` must use that Hol\_K(M) is the closed-walk group of this specific graph.
+
+### 3.3 Slope-1 loops \[derived; checked on 14 certificates\]
+
+*Derivation.* A forward walk with A doublings and u undos maps a node n to (2^A n − C)/3^u, where C = Σ over the undo steps of 3^(number of undos before that step)·2^(number of doublings after it) (the closed form of section 4.1). Its label is t ↦ (2^A t − C)/3^u: slope 2^A·3^(−u), translation part −C·3^(−u). The slope is 1 modulo M iff M | 2^A − 3^u. In that case the label is the translation by d = −C·3^(−u), a unit iff gcd(C, M) = 1.
+
+*Consequence.* **`UnitTranslation M` at depth K holds if there is a closed walk at depth K with M | 2^A − 3^u and gcd(C, M) = 1.** It is also necessary: the forward graph is strongly connected and Hol\_K(M) is a finite group, so every element is the label of a forward closed walk (a backward edge is replaced by a forward path back plus a power of a forward cycle). The condition has the shape of the Collatz cycle equation (2^S − 3^k)·n = N, with C playing the role of N.
+
+*Data.* Every certificate in the file has this form:
+
+| M | depth | A | u | 2^A − 3^u | C | d = −C/3^u |
+| --- | --- | --- | --- | --- | --- | --- |
+| 25 | 1 | 7 | 1 | 125 = 5·25 | 8 | 14 |
+| 55 | 1 | 6 | 2 | 55 | 28 | 3 |
+| 253 | 1 | 8 | 1 | 253 | 64 | 63 |
+| 35 | 1 | 10 | 2 | 1015 = 35·29 | 88 | 33 |
+| 91 | 1 | 12 | 6 | 3367 = 91·37 | 1522 | 25 |
+| 385 | 1 | 18 | 6 | 261415 = 385·679 | 1522 | 347 |
+
+The closing condition at depth K (the walk returns to class 1 modulo 3^(K+1)) reads (2^A − C)/3^u ≡ 1 (mod 3^(K+1)), with every undo legal along the way. A legal word is the same thing as a chain of tree nodes, so the problem becomes: find integers n₀ ≡ n₁ ≡ 1 (mod 3^(K+1)) with n₁ = (2^A n₀ − C)/3^u along a legal word, such that M | 2^A − 3^u and gcd(C, M) = 1.
+
+### 3.4 Data \[numeric; Python in appendix F, Lean in `holStats` and the certificates\]
+
+- For every M in \[5, 400\] coprime to 6 (132 moduli) at depth 1, and every M in \[5, 200\] coprime to 6 (66 moduli) at depth 2, a forward closed walk with a unit translation exists. No failure was found. The longest certificate has 74 steps (M = 323, depth 1) and 41 steps (M = 127, depth 2). Depth 3 was spot-checked for 25, 35, 49, 55.
+- Group sizes (depth 1): |Hol| = M·φ(M), the full group Z/M ⋊ units, for M = 25, 35, 49, 55, 65, 77, 85, 91, 121 and 155 (for 155 = 5·31 it is the full direct product of the mod-5 and mod-31 groups: no gluing). For M = 253 and 385 the group has half that size (the slopes generated by 2 and 3 form an index-2 subgroup). Translations are all of Z/M in every case.
+- 15 certificates are kernel-checked in the file (`unit_translation_M_K`), for M from 25 to 385.
+
+### 3.5 Suggested next steps
+
+1. Formalize 3.3 in Lean: prove that `runCert` computes the label (2^A·i3^u, −i3^u·C) from the list statistics (D: C ↦ 2C; U: C ↦ C + 3^u), and state the equivalence “unit translation at depth K ⇔ a legal closed word with M | 2^A − 3^u and gcd(C, M) = 1”.
+2. Prove existence for M = q^e and M = q·r: choose A and u as multiples of the orders of 2 and 3 so that 2^A ≡ 3^u ≡ 1 (mod M), then satisfy the 3-adic closing condition and gcd(C, M) = 1 by a CRT or counting argument on words. The smallest solutions in the table, (A, u) = (6, 2) for 55 and (8, 1) for 253 (where M = 2^A − 3^u exactly), suggest the pattern.
+3. Search for a counterexample using the integer reformulation (enumerate pairs (A, u) with M | 2^A − 3^u and test the closing condition by dynamic programming over the 2·3^K states, tracking C mod M), at larger M and at depths 3 and 4, and for M whose prime factors p have ord\_p(2) and ord\_p(3) sharing large factors (the gluing mechanism of 3.2).
+4. Prove independence of Hol\_K(q) and Hol\_K(r) for coprime q, r (true numerically at 155, index 2 at 253 and 385).
+
+### 3.6 Cautions
+
+- The theorem needs the unit translation at every depth K ≥ 1 (precisely at depth max(K₀, J)); the evidence covers K ≤ 3 only.
+- The examples over Z/55 and Z/25 concern abstract subgroups and do not refute the actual holonomy group.
+- A certificate is depth-specific and says nothing about other depths.
+- The scan in appendix F is Python; only the certificates and the Z/55 and Z/25 facts are kernel-checked.
+- The left-branch chain of section 4 uses coarse states (classes modulo 9) because it models generic seeds, so its loops return to a coarse class. A closed walk in the depth-K graph must return to the full class modulo 3^(K+1), which constrains the word. The cheap loops of section 4.4 do not transfer to Hol\_K(M).
 
 ## 6. Appendix: scripts behind the numeric claims
 
