@@ -7,4 +7,6 @@ n ≡ r (mod N) whose Collatz trajectory reaches w.
 ## Files
 
 - `Every Remainder Everywhere`: the paper
+- `ERE.tex`: uncompiled LaTeX of paper
+
 - `ERE.lean`: the Lean 4 formalization
