@@ -57,7 +57,7 @@
 \begin{document}
 
 \begin{abstract}
-We prove that for every modulus $N \ge 1$, every positive integer $w$ not divisible by $3$, every residue $r$, and every threshold $B$, there is an integer $n > B$ with $n \equiv r \pmod N$ whose Collatz trajectory reaches $w$. In particular, the set of predecessors of $w$ is infinite in every residue class modulo every $N$. The $2$-adic and $3$-adic parts of the modulus are handled by prescribing a parity prefix of the shortcut map. For the remaining factor $M$, coprime to $6$, we study the backward tree of $2w$ through a finite graph whose edges carry affine maps of $\mathbb{Z}/M\mathbb{Z}$. A commutator with an explicit closed walk shows that the group of labels of closed walks contains the translation $t\mapsto t+1$, which forces every residue to occur. All results have been verified in Lean~4 without external libraries.
+We prove that for every modulus $N \ge 1$, every natural number $w$ not divisible by $3$, every residue $r$, and every threshold $B$, there is a natural number $n > B$ with $n \equiv r \pmod N$ whose Collatz trajectory reaches $w$. In particular, the set of predecessors of $w$ is infinite in every residue class modulo every $N$. The $2$-adic and $3$-adic parts of the modulus are handled by prescribing a parity prefix of the shortcut map. For the remaining factor $M$, coprime to $6$, we study the backward tree of $2w$ through a finite graph whose edges carry affine maps of $\mathbb{Z}/M\mathbb{Z}$. A commutator with an explicit closed walk shows that the group of labels of closed walks contains the translation $t\mapsto t+1$, which forces every residue to occur. All results have been verified in Lean~4 without external libraries.
 \end{abstract}
 \maketitle
 
@@ -65,14 +65,14 @@ We prove that for every modulus $N \ge 1$, every positive integer $w$ not divisi
 Let $\C\colon\N\to\N$ be the Collatz map, $\C(n)=n/2$ for even $n$ and $\C(n)=3n+1$ for odd $n$. We write $n\reaches v$ if $\C^{(k)}(n)=v$ for some $k\ge 0$.
 
 \begin{theorem}[Every Remainder Everywhere]\label{thm:main}
-Let $N\ge 1$, let $w$ be a positive integer with $3\nmid w$, and let $r,B\in\N$. Then there exists $n\in\N$ with
+Let $N\ge 1$, let $w\in\N$ with $3\nmid w$, and let $r,B\in\N$. Then there exists $n\in\N$ with
 \[
 n>B,\qquad n\reaches w,\qquad n\equiv r \pmod N.
 \]
 \end{theorem}
 
 \begin{corollary}\label{cor:infinite}
-For every $N\ge 1$, every $w>0$ with $3\nmid w$ and every residue $r$ modulo $N$, the set $\{n\in\N : n\reaches w,\ n\equiv r \pmod N\}$ is infinite.
+For every $N\ge 1$, every $w\in\N$ with $3\nmid w$ and every residue $r$ modulo $N$, the set $\{n\in\N : n\reaches w,\ n\equiv r \pmod N\}$ is infinite.
 \end{corollary}
 \begin{proof}
 Apply Theorem~\ref{thm:main} with arbitrarily large $B$.
@@ -94,7 +94,7 @@ Expanding the iterates of the shortcut map along a parity prefix is the classica
 Every result in this paper is formalized in Lean~4 \cite{deMouraUllrich21}, in a single file \texttt{ERE.lean} that imports nothing and uses only the core library; Theorem~\ref{thm:main} is \texttt{every\_\allowbreak remainder\_\allowbreak everywhere}. The file compiles under the toolchains \texttt{leanprover/\allowbreak lean4:\allowbreak v4.36.0-rc1} and \texttt{v4.36.0-rc2}. The reader can check this by running \texttt{lean ERE.lean}, or by pasting the file into the web editor at \url{https://live.lean-lang.org}; the final command \texttt{\#print axioms every\_\allowbreak remainder\_\allowbreak everywhere} should report \texttt{propext}, \texttt{Classical.choice} and \texttt{Quot.sound}. A compiler cannot confirm that the formal statement says what Theorem~\ref{thm:main} says. For that, the reader needs only the definitions \texttt{collatz}, \texttt{iter} and \texttt{Reaches} and the statement of \texttt{every\_\allowbreak remainder\_\allowbreak everywhere}, fewer than ten lines in all. The appendix lists the Lean names of the principal statements.
 
 \subsection*{Conventions}
-Throughout, $N$ is a positive integer and $\N=\{0,1,2,\dots\}$. Since every residue class modulo $N$ contains a natural number, there is no loss of generality in taking $r\in\N$ in Theorem~\ref{thm:main}. For $n\in\Z$ and a modulus $M$ we write $(n:\ZM)$ for the class of $n$. We write $L_K=3^{K+1}$. An integer $x$ is \emph{live} if $3\nmid x$. The word \emph{unit} always refers to an invertible element of a residue ring. For $M$ coprime to $6$, the integers $2$ and $3$ are units of $\ZM$, and $2^{-1},3^{-1}$ denote their inverses.
+Throughout, $N$ is a positive integer and $\N=\{0,1,2,\dots\}$. Since $3\mid0$, the condition $3\nmid w$ forces $w\ge1$. Since every residue class modulo $N$ contains a natural number, there is no loss of generality in taking $r\in\N$ in Theorem~\ref{thm:main}. For $n\in\Z$ and a modulus $M$ we write $(n:\ZM)$ for the class of $n$. We write $L_K=3^{K+1}$. An integer $x$ is \emph{live} if $3\nmid x$. The word \emph{unit} always refers to an invertible element of a residue ring. For $M$ coprime to $6$, the integers $2$ and $3$ are units of $\ZM$, and $2^{-1},3^{-1}$ denote their inverses.
 
 \section{Backward Steps and the Tree}\label{sec:tree}
 \begin{lemma}\label{lem:steps}
@@ -442,7 +442,7 @@ Take $K=k+B+1$ and $d=(c\bmod3^k)+3^k(B+1)$. Then $d\equiv c\pmod 3^k$, so $d$ i
 \end{proof}
 
 \begin{proposition}[Density input]\label{prop:density_input}
-Let $M\ge1$ be coprime to $6$, let $w>0$ with $3\nmid w$, $k\ge1$, $c$ live, $\mu\in\N$ and $B\in\N$. There is $m\in\Tr(2w)$ with
+Let $M\ge1$ be coprime to $6$, let $w\in\N$ with $3\nmid w$, $k\ge1$, $c$ live, $\mu\in\N$ and $B\in\N$. There is $m\in\Tr(2w)$ with
 \[
 m\equiv c\pmod{3^k},\qquad m\equiv\mu\pmod M,\qquad m>B .
 \]
@@ -467,7 +467,7 @@ Take $K,d$ from Lemma~\ref{lem:lift_class}. Theorem~\ref{thm:density} with seed 
 
 \subsection*{The forward construction}
 \begin{proposition}[Forward parity construction]\label{prop:construct}
-Let $M\ge1$ be coprime to $6$, let $w>0$ with $3\nmid w$, let $a',r'\ge0$ with $j=j(a',r')\ge1$, and let $b,s,B\ge0$. There is $n>B$ with $n\reaches w$,
+Let $M\ge1$ be coprime to $6$, let $w\in\N$ with $3\nmid w$, let $a',r'\ge0$ with $j=j(a',r')\ge1$, and let $b,s,B\ge0$. There is $n>B$ with $n\reaches w$,
 \[
 n\equiv r'\pmod{2^{a'}}\qquad\text{and}\qquad n\equiv r'+2^{a'}s\pmod{3^bM}.
 \]
