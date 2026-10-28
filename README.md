@@ -6,10 +6,10 @@ For every modulus $N \ge 1$, every positive integer $w$ not divisible by $3$, ev
 
 - [`Every Remainder Everywhere.pdf`](Every%20Remainder%20Everywhere.pdf): the paper
 - [`ERE.tex`](ERE.tex): uncompiled LaTeX of the paper
-- [`ERE.lean`](ERE.lean): the Lean 4 formalization (no imports; Lean 4.36.0-rc1)
+- [`ERE.lean`](ERE.lean): the Lean 4 formalization (no imports; tested with Lean 4.36.0-rc1 and 4.36.0-rc2)
 - [`Ring transport.html`](Ring%20transport.html): an interactive demonstration of the central trick (see below)
 
-If you only want to understand what the result says and why it is true, read on. The correctness of the proof rests on the Lean file, which checks it completely. `#print axioms every_remainder_everywhere` reports only `propext`, `Classical.choice` and `Quot.sound`. Nothing below proves anything. It explains.
+If you only want to understand what the result says and why it is true, read on. The proof itself is checked by the Lean file: `#print axioms every_remainder_everywhere` reports only `propext`, `Classical.choice` and `Quot.sound`. What a reader has to check by eye is that the formal statement says what the theorem above says, and that takes only the statement of `every_remainder_everywhere` and the definitions `collatz`, `iter` and `Reaches`, fewer than ten lines. Nothing below is part of the proof. It explains.
 
 ---
 
@@ -30,13 +30,13 @@ Instead of following a number forward, ask who can arrive at a given number $n$.
 - $2n$, because halving $2n$ gives $n$.
 - $(n-1)/3$, but only when that is an odd whole number. That happens exactly when $n$ leaves remainder 4 on division by 6.
 
-The second move is only used when its result is not a multiple of 3, since a multiple of 3 can never be produced by "triple and add one". Starting from $w$ (really from $2w$), these two moves generate a tree of everything that flows into $w$. The question is what remainders that tree contains.
+The second move is only used when its result is not a multiple of 3, since a multiple of 3 can never be produced by "triple and add one". Starting from $2w$, which reaches $w$ in one step, these two moves generate a tree of numbers that flow into $w$. The question is what remainders that tree contains.
 
 ## Why remainders are awkward
 
-Write $N = 2^a \cdot 3^b \cdot M$, where $M$ has no factor of 2 or 3. The three pieces behave very differently.
+Write $N = 2^a \cdot 3^b \cdot M$, where $M$ has no factor of 2 or 3. The pieces behave very differently.
 
-On a clock of size $M$, doubling and tripling are reversible, because 2 and 3 have inverses. On a clock of size $2^a$, doubling destroys information: keep doubling and everything collapses to 0, so you cannot run it backwards cleanly.
+On a clock of size $M$, doubling and tripling are reversible, because 2 and 3 have inverses. On a clock of size $2^a$, doubling destroys information: keep doubling and everything collapses to 0, so you cannot run it backwards cleanly. Tripling does the same on a clock of size $3^b$.
 
 So the proof uses two tools. The $M$ part gets a careful backward analysis through the tree. The $2^a \cdot 3^b$ part gets a forward trick. The two are combined at the end.
 
@@ -64,7 +64,7 @@ There is one scenario where the tree would be non-uniform. Suppose a single rema
 
 The proof shows that no flat assignment exists, whenever the clock $M$ is more than trivial. It follows what such a labelling would force:
 
-1. Doubling forces the type containing $2^j$ to carry remainder $2^j$, and the types that are powers of 4 to carry the matching power of 4.
+1. The base type is forced to carry remainder 1. Doubling then forces the type containing $2^j$ to carry remainder $2^j$, and the types that are powers of 4 to carry the matching power of 4.
 2. A specially chosen type has two exits that land in types differing by exactly $2 \cdot 3^{K-1}$ doublings. Both exits must carry the same label, so $4^{3^{K-1}} = 1$ on the clock. So 4 has to cycle back to 1 with a period that is a power of 3.
 3. A second pair of linked types finishes it. One is forced to carry remainder 4, so its exit type must carry 1. But that exit sits at a 3-adic position where powers of 4 have not yet returned to 1, so it cannot carry 1.
 
@@ -72,13 +72,13 @@ Every single move obeys the rules. Only the full picture is impossible.
 
 ## Why "no fixed remainder" is not quite enough
 
-You might hope this finishes the job. It does not, and there is a concrete warning. On a clock of size 55, the map $t \mapsto 36t + 11$ has no fixed point and generates a small group, yet that group contains no pure shift at all. So the absence of a common fixed remainder does not by itself hand you $+1$.
+You might hope this finishes the job. It does not, and there is a concrete warning. On a clock of size 55, the map $t \mapsto 36t + 11$ has no fixed point and generates a small group, yet the only pure shift in that group is the identity. So the absence of a common fixed remainder does not by itself hand you $+1$.
 
 The fix is one explicit loop with a handy property. The loop is: double, double, undo, double, un-double. Its net effect is a stretch by $4/3$ around the remainder 1, so it leaves 1 where it is. The key fact is that $4/3 - 1 = 1/3$ is invertible on the clock, so this stretch never collapses anything. Call this loop $w_0$.
 
 Now take any loop $k$ in the group and do: $k$, then $w_0$, then $k$ backwards, then $w_0$ backwards. The stretches cancel, and what is left is a **pure shift**. The size of that shift measures how far $k$ moves the remainder 1.
 
-The shifts you can get this way form a regular pattern: all multiples of some number $q$ dividing $M$. Suppose $q$ is bigger than 1. Look at everything through the coarser clock of size $q$. Every shift is now invisible, so every loop leaves 1 alone. That is exactly the forbidden flat pattern, now on the smaller clock. It was shown impossible, so $q = 1$, and $+1$ is in the group.
+All the pure shifts in the group form a regular pattern: all multiples of some number $q$ dividing $M$. Suppose $q$ is bigger than 1. Look at everything through the coarser clock of size $q$. Every shift is now invisible, so by the measurement above every loop leaves 1 alone. That is exactly the forbidden flat pattern, now on the smaller clock. It was shown impossible, so $q = 1$, and $+1$ is in the group.
 
 ## From $+1$ to everything
 
@@ -86,11 +86,11 @@ The base type's set is closed under $+1$, so it is the whole clock. All the type
 
 ## The 2s and 3s in $N$
 
-For the $2^a \cdot 3^b$ part, the proof stops going backwards and runs the Collatz rule forwards. Choose the first few even/odd decisions of $n$ in advance. That pins down $n$ modulo a power of 2. After those steps the result has a clean form:
+For the $2^a \cdot 3^b$ part, the proof stops going backwards and runs the Collatz rule forwards. Here it is convenient to count "triple, add one, then halve" as a single step, so every step halves. Choose the first few even/odd decisions of $n$ in advance. That pins down $n$ modulo a power of 2. After those steps the result has a clean form:
 
 $$e + 3^j \cdot t$$
 
-where $j$ is how many of the chosen steps were odd, and $t$ is the part of $n$ left free. The shape comes from each odd step multiplying the free part by 3, while each even step just halves it away.
+where $j$ is how many of the chosen steps were odd, and $t$ is the part of $n$ left free. The shape comes from every step halving the free part and each odd step also tripling it: after the prefix, the power of 2 is used up and a power of 3 is left.
 
 The prefix is chosen to include at least one odd step. That matters because "triple and add one" always leaves remainder 1 modulo 3, and after that nothing can make the number a multiple of 3. So the output is a number the backward tree can actually contain.
 
