@@ -4,7 +4,9 @@ For every modulus $N \ge 1$, every natural number $w$ not divisible by $3$, ever
  
 ## Why it matters
 
-For the Collatz problem, the one familiar local modular obstruction is a root divisible by 3: nothing but doubling can lead into it, so its inverse tree is just $w, 2w, 4w, \dots$. ERE shows this is the only obstruction of its kind. For every root not divisible by 3, the inverse tree contains infinitely many numbers in every residue class modulo every $N$. The proof is fully verified in Lean 4.
+For the Collatz problem, the one familiar local modular obstruction is a root divisible by 3: nothing but doubling can lead into it, so its inverse tree is just $w, 2w, 4w, \dots$.
+
+Every Remainder Everywhere shows this is the only obstruction of its kind. For every root not divisible by 3, the inverse tree contains infinitely many numbers in every residue class modulo every $N$.
 
 This does not prove or disprove the Collatz conjecture. It says that a congruence condition on the members of an inverse tree can never, by itself, exclude a number from reaching $w$. So any proof ruling out a nontrivial cycle or a divergent orbit has to use something beyond residue constraints on tree membership.
 
