@@ -1,5 +1,7 @@
 # Every Remainder Everywhere
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23757322.svg)](https://doi.org/10.5281/zenodo.23757322)
+
 For every modulus $N \ge 1$, every natural number $w$ not divisible by $3$, every residue $r$ and every bound $B$, there is a natural number $n > B$ with $n \equiv r \pmod N$ whose Collatz trajectory reaches $w$.
  
 ## Why it matters
